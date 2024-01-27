@@ -55,6 +55,16 @@ def getReview(word):
   reviews = soup.find_all('div', class_='_cmttxt _wwrap')[:5]
   review_text = [element.get_text(strip=True) for element in reviews]
   #used ThreadPoolExecutor for parallel excution of revies
+  pros = ""
+  cons = ""
+  for review in review_text:
+    sentiment = getSentiment(review)
+    if "POSITIVE" == sentiment:
+      pros = review + ' '
+    if "NEGATIVE" == sentiment:
+      cons = review + ' '
+  pros = summarize_text_with_bert(pros)
+  cons = summarize_text_with_bert(cons)   
   with ThreadPoolExecutor(max_workers=3) as executor:
     # Submit tasks to the executor
     tasks = [executor.submit(summarize_text_with_bert, doc) for doc in review_text]
@@ -78,7 +88,14 @@ def getReview(word):
   date_text = [element.get_text(strip=True) for element in li_tags[-1]][1]
   # print("Date data:\n")
   date = extract_date_from_text(date_text)
-  return {'publish_date':date,'summary_text':summary_text,'review_text':review_filtered_emotions}
+  return {
+    'publish_date':date,
+    'summary_text':summary_text,
+    'pros':pros,
+    'cons':cons,
+    'review_text':review_filtered_emotions
+    }
+
 
 # print(datetime.now())
 # print(getReview("Poco F1"))
